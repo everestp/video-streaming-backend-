@@ -98,8 +98,8 @@ video.setFilePath(path.toString());
 
     @Override
     public Video get(String videoId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'get'");
+     Video video =  videoRepo.findById(videoId).orElseThrow(()-> new RuntimeException("Video not FOund"));
+       return video;
     }
 
     @Override

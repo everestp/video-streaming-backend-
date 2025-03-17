@@ -13,10 +13,15 @@ import com.offnine.backend.services.VideoService;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -26,12 +31,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 @CrossOrigin("*")
 public class VideoController {
 
+    private final BackendApplication backendApplication;
+
 @Autowired
 private VideoRepo videoRepo;
 
     
     @Autowired
     private VideoService  videoService;
+
+
+    VideoController(BackendApplication backendApplication) {
+        this.backendApplication = backendApplication;
+    }
 
   
 
@@ -61,6 +73,20 @@ private VideoRepo videoRepo;
 
 // stream video
 
+@GetMapping("/stream/{videoId}")
+public ResponseEntity<Resource> stream(
+  @PathVariable String videoId
+){
 
-     public ResponseE
+  Video video =  videoService.get(videoId);
+   String contentType = video.getContentType();
+   String filePath = video.getFilePath();
+   String title = video.getTitle()
+   if(contentType ==null){
+    contentType ="appication/octet-stream";
+   }
+Resource resource = new FileSystemResource(filePath)
+
+   return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(resource);
+}
 }
