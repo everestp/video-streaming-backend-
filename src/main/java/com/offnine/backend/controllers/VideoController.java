@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.offnine.backend.AppConstants;
 import com.offnine.backend.BackendApplication;
 import com.offnine.backend.Repo.VideoRepo;
 import com.offnine.backend.entities.Video;
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -41,6 +44,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @CrossOrigin("*")
 public class VideoController {
 
+    private final BackendApplication backendApplication;
+
 
 
 
@@ -51,6 +56,11 @@ private VideoRepo videoRepo;
     
     @Autowired
     private VideoService  videoService;
+
+
+    VideoController(BackendApplication backendApplication) {
+        this.backendApplication = backendApplication;
+    }
 
 
 
@@ -137,34 +147,40 @@ if(range==null){
 
   String[] ranges = range.replace("bytes=", "").split("-");
  rangeStart = Long.parseLong(ranges[0]);
-if(ranges.length  > 1){
-  rangeEnd =Long.parseLong(range);
-}
-else{
-  rangeEnd = fileLength -1;
 
-}
-if(rangeEnd > fileLength -1){
+
+
+ // cacuate end range
+rangeEnd = rangeStart + AppConstants.CHUNK_SIZE -1 ;
+if(rangeEnd >= fileLength){
   rangeEnd = fileLength -1;
 }
+
+
+// if(ranges.length  > 1){
+//   rangeEnd =Long.parseLong(range);
+// }
+// else{
+//   rangeEnd = fileLength -1;
+
+// }
+// if(rangeEnd > fileLength -1){
+//   rangeEnd = fileLength -1;
+// }
 
 InputStream inputStream;
 try {
   inputStream = Files.newInputStream(path);
 inputStream.skip(rangeStart);
 
-
-
-
-
-
-
-  
-} catch (IOException e) {
-return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-}
-
 long  contentLength = rangeEnd-rangeStart +1;
+
+
+byte[] data = new byte[(int) contentLength];
+int read = inputStream.read(data  ,0,data.length);
+System.out.println("Read number of fie"+ read);
+
+
 HttpHeaders headers = new HttpHeaders();
 headers.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
 headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -173,7 +189,20 @@ headers.add("Expires", "0");
 headers.add("X-Content-Type-Options", "nosniff");
 
 headers.setContentLength(contentLength);
-  return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(headers).contentType(MediaType.parseMediaType(contentType)).body(new InputStreamResource(inputStream));
+  return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(headers).contentType(MediaType.parseMediaType(contentType)).body(new ByteArrayResource(data));
+
+
+
+
+
+  
+} 
+
+catch (IOException e) {
+return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+}
+
+
 }
 
 
