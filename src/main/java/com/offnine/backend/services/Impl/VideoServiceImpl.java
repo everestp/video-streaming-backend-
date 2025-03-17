@@ -110,8 +110,7 @@ video.setFilePath(path.toString());
 
     @Override
     public List<Video> getAll() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAll'");
+        return videoRepo.findAll();
     }
     
 }
